@@ -11,6 +11,7 @@ const categoryRouter = require("./src/Routes/categoryRoute")
 const reportRouter = require("./src/Routes/reportRoute")
 const stockRouter = require("./src/Routes/stockRoute")
 const dashboardRouter = require("./src/Routes/dashboardRoute")
+const searchRouter = require("./src/Routes/searchRoute")
 
 app.use(express.json())
 app.use(cors())
@@ -33,6 +34,7 @@ app.use("/reports", reportRouter)
 
 app.use("/stocks", stockRouter)
 
+app.use("/search", searchRouter)
 
 app.listen(process.env.PORT, () => {
    console.log(`Server berjalan di http://localhost:${process.env.PORT}`);

@@ -3,6 +3,7 @@ import gambar1 from '../assets/login1.png'
 import {Link, useNavigate} from 'react-router-dom'
 import {useState} from 'react'
 import authServices from '../services/authServices'
+import toast from "react-hot-toast"
 
 const Login = () => {
     const [email, setEmail] = useState('')
@@ -20,11 +21,11 @@ const Login = () => {
             const token = result.data.token
 
             if (user) {
-            localStorage.setItem("user", JSON.stringify(user))
-            localStorage.setItem("token", token)
-            console.log("Login succesful", user)
-            console.log("Token stored:", localStorage.getItem("token"))
-            setTimeout(() => navigate("/dashboard"), 100)
+                localStorage.setItem("user", JSON.stringify(user))
+                localStorage.setItem("token", token)
+                console.log("login succesfully", user)
+                toast.success("Login succesfully")
+                setTimeout(() => navigate("/dashboard"), 100)
             } else {
                 console.log("User not found in localstorage", result.user)
             }
@@ -67,9 +68,9 @@ const Login = () => {
                             <input type="checkbox" className='accent-red-500' />
                             <span> Remember me </span>
                         </label>
-                        <a href="#" className="hover:underline text-white">
+                        <Link to="/forgot-password" className="hover:underline text-white">
                          Forgotten password?
-                        </a>
+                        </Link>
                     </div>     
 
                     {error && <p className='text-red-300 text-sm mb-3'>{error}</p>} 

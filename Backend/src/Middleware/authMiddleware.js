@@ -11,8 +11,12 @@ const authMiddleware = (req, res, next) => {
 
     try {
         const decoded = jwt.verify(token, SECRET_KEY)
-        req.user = decoded
-        console.log("Decoded user:", req.user);
+        req.user = {
+            id : decoded.id,
+            role : decoded.role,
+            username : decoded.username
+        }
+        console.log("Akses berhasil, username :", req.user.username, "| Role :", req.user.role );
         next()
     } catch (error) {
         return res.status(403).json({message : "Token tidak valid"})

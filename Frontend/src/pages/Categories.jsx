@@ -3,6 +3,8 @@ import Table from "../components/Table"
 import FormModal from "../components/ModalForm"
 import categoriesServices from "../services/categoriesServices"
 import { FiArrowLeft } from "react-icons/fi"
+import toast from "react-hot-toast"
+import Swal from "sweetalert2"
 
 const Categories = () => {
   const [category, setCategory] = useState([])
@@ -20,7 +22,7 @@ const Categories = () => {
       setCategory(Array.isArray(result.data) ? result.data : [])
     } catch (error) {
       console.error("[fetchDataCategory] error:", error)
-      alert("Failed fetch categories")
+      toast.error("Failed to load categories")
     } finally {
       setLoading(false)
     }
@@ -46,30 +48,40 @@ const Categories = () => {
     try {
       console.log("[handleSubmit] formData:", formData, "isEdit:", isEditMode);
       if (isEditMode) {
-        if (!formData.id) throw new Error("Missing product id for update")
+        if (!formData.id) throw new Error("Missing categories id for update")
         await categoriesServices.updatecategories(formData.id, formData)
-        alert("Categories updated")
+        toast.success("Categories updated")
       } else {
         await categoriesServices.addCategories(formData)
-        alert("Categories added")
+        toast.success("Categories added")
       }
       setModalOpen(false)
       fetchDataCategory()
     } catch (error) {
       console.error("[handleSubmit] error:", error)
-      alert("Failed to save categories")
+      toast.error("Failed to save categories")
     }
   }
 
   const handleDelete = async (id) => {
+    const result = await Swal.fire({
+                title: 'Are you sure?',
+                text: "This action cannot be undone!",
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#b91c1c',
+                cancelButtonColor: '#CBCBCB',
+                confirmButtonText: 'Yes, delete it!',
+                background: '#fff',
+            })
+    if (result.isConfirmed)
     try {
-      if (!window.confirm("Delete this product?")) return
-      await categoriesServices.deleteCategories(id)
-      alert("Categories deleted")
+      const result = await categoriesServices.deleteCategories(id)
+      toast.success(result.data.message)
       fetchDataCategory()
     } catch (error) {
       console.error("[handleDelete] error:", error)
-      alert("Failed to delete categories")
+      toast.error("Failed to delete categories")
     }
   }
 
@@ -80,13 +92,12 @@ const Categories = () => {
         fetchDataCategory()
         return
       }
-      console.log("[handleSearch] calling searchProduct with:", keyword)
       const result = await categoriesServices.searchCategories(keyword)
       console.log("[handleSearch] response:", result)
       setCategory(Array.isArray(result.data) ? result.data : [])
     } catch (error) {
       console.error("[handleSearch] error:", error)
-      alert("Search failed");
+      toast.error("Search failed");
     }
   }
 
@@ -132,7 +143,7 @@ const Categories = () => {
       />
       </div>
     </div>
-  );
-};
+  )
+}
 
 export default Categories;

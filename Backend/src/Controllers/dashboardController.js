@@ -1,5 +1,5 @@
-const { Product, Stock, User, OrderItem, Order } = require("../Models")
-const {Op} = require("sequelize")
+const { Product, Stock, User, OrderItem, Order, Categories } = require("../Models")
+const {Op, Sequelize} = require("sequelize")
 
 const dashboardAdmin = async (req, res) => {
     try {
@@ -13,12 +13,30 @@ const dashboardAdmin = async (req, res) => {
         }
 
         const products = await Product.findAll({
-            attributes : ["id", "name", "stock", "price"]
+            attributes : ["id", "name", "stock", "price"],
+            include : [
+                {
+                    model: Categories,
+                    attributes: ["id", "name"],
+                },
+            ]
         })
 
-        const totalStock = await Stock.sum("stock_akhir")
+        const allStocks = await Stock.findAll({
+            attributes: ["product_id", "stock_akhir", "createdAt"],
+            order: [["createdAt", "DESC"]],
+            raw: true
+        })
 
+        const latestStocks = {}
+        for (const s of allStocks) {
+            if (!latestStocks[s.product_id]) {
+                latestStocks[s.product_id] = s.stock_akhir
+            }
+        }
 
+        const totalStock = Object.values(latestStocks).reduce((a, b) => a + (b || 0), 0)
+        
         const stockData = await Stock.findAll({
             attributes : ["product_id", "stock_akhir"],
             order: [["createdAt", "DESC"]],
@@ -49,22 +67,42 @@ const dashboardAdmin = async (req, res) => {
             const stockAkhir = stockAwal ? stockAwal.stock_akhir : 0
 
             const productSales = orderitems
-                .filter((item) => item.product_id == product.id)
+                .filter((item) => item.product_id === product.id)
                 .reduce((acc, item) => acc + item.quantity * item.product_price, 0)
 
             return {
                 name : product.name,
                 sales : productSales,
-                purchase : 0,
+                category : product.Category ? product.Category.name : "Uncategorized",
                 stock : stockAkhir
             }
         })
 
+        const categorySales = {}
+
+        chartData.forEach((item) => {
+            if (!categorySales[item.category]) categorySales[item.category] = { sales: 0, stock: 0 };
+            categorySales[item.category].sales += item.sales;
+            categorySales[item.category].stock += item.stock;
+        })
+
+       const categoryChart = Object.keys(categorySales).map((key) => ({
+            name: key,
+            sales: categorySales[key].sales,
+            stock: categorySales[key].stock,
+        }))
+
+        const totalCategories = await Categories.count()
+
+        const totalProducts = await Product.count()
+
         res.status(200).json({
             sales : totalSales,
-            purchase : 0,
+            totalCategories,
             stock : totalStock,
-            chart : chartData
+            totalProducts,
+            chart : chartData,
+            categoryChart
         })
 
 
@@ -87,10 +125,29 @@ const dashboardSuperadmin = async (req, res) => {
         }
 
         const products = await Product.findAll({
-            attributes : ["id", "name", "stock", "price"]
+            attributes : ["id", "name", "stock", "price"],
+            include : [
+                {
+                    model: Categories,
+                    attributes: ["id", "name"],
+                },
+            ]
         })
 
-        const totalStock = await Stock.sum("stock_akhir")
+        const allStocks = await Stock.findAll({
+            attributes: ["product_id", "stock_akhir", "createdAt"],
+            order: [["createdAt", "DESC"]],
+            raw: true
+        })
+
+        const latestStocks = {}
+        for (const s of allStocks) {
+            if (!latestStocks[s.product_id]) {
+                latestStocks[s.product_id] = s.stock_akhir
+            }
+        }
+
+        const totalStock = Object.values(latestStocks).reduce((a, b) => a + (b || 0), 0)
 
         const totalUser = await User.count()
 
@@ -135,12 +192,30 @@ const dashboardSuperadmin = async (req, res) => {
             }
         })
 
+        const categorySales = {}
+
+        chartData.forEach((item) => {
+            if (!categorySales[item.category]) categorySales[item.category] = { sales: 0, stock: 0 };
+            categorySales[item.category].sales += item.sales;
+            categorySales[item.category].stock += item.stock;
+        })
+
+       const categoryChart = Object.keys(categorySales).map((key) => ({
+            name: key,
+            sales: categorySales[key].sales,
+            stock: categorySales[key].stock,
+        }))
+
+        const totalCategories = await Categories.count()
+
         res.status(200).json({
             sales : totalSales,
             purchase : 0,
             stock : totalStock,
             user : totalUser,
-            chart : chartData
+            totalCategories,
+            chart : chartData,
+            categoryChart
         })
 
     } catch (error) {

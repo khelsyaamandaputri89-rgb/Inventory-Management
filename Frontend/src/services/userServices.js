@@ -1,8 +1,9 @@
 import api from './api'
 
-const User = (data) => api.post("/users", data)
-const Users = (data) => api.get("/users", data)
-const user = (data) => api.put("/users/:id", data)
-const users = (data) => api.delete("/users/:id", data)
+const addUsers = (data) => api.post("/users", data)
+const getUsers = () => api.get("/users")
+const updateUsers = (id, data) => api.put(`/users/${id}`, data)
+const deleteUsers = (id) => api.delete(`/users/${id}`)
+const searchUsers = (keyword) => api.get("/users/search", { params: { search: keyword }})
 
-export default {User, Users, user, users}
+export default {addUsers, getUsers, updateUsers, deleteUsers, searchUsers}

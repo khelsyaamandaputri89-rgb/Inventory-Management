@@ -76,16 +76,22 @@ const getOrder = async (req, res) => {
                 model : User, 
                 attributes : ["id", "username", "email"]},
                 {
-                    model : OrderItem,
-                    include : [{model : Product, 
-                    attributes : ["name", "price", "stock"],
-                    include: [
-                          { model: Categories, attributes: ["name"] } 
-                        ]
-                      }]
+                  model : OrderItem,
+                  include : [
+                    {
+                      model : Product, 
+                      attributes : ["id", "name", "price", "stock"],
+                      include: [
+                        {
+                          model: Categories, attributes: ["name"] } 
+                      ]
                     }
-                ]
-            })
+                  ]
+                }
+              ],
+              order: [["id", "ASC"]]
+            }
+          )
 
         const formattedOrders = orders.map(order => {
             const totalQty = order.OrderItems.reduce((sum, item) => sum + item.quantity, 0)

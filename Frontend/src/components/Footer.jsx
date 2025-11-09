@@ -23,7 +23,7 @@ const Footer = () => {
                     <p>
                         {" "}
                         <FaMapMarkerAlt />
-                        Kpg. Cihasem Ds. PasirPanjang Kec. Salem Kab. Brebes Jawa Tengah
+                        Cihasem Village, Pasir Panjang Village, Salem District, Brebes Regency, Central Java
                     </p>
                 </div>
             </div>

@@ -3,6 +3,7 @@ import {Link, useNavigate} from 'react-router-dom'
 import gambar2 from '../assets/login.png'
 import {useState} from 'react'
 import authServices from '../services/authServices'
+import toast from 'react-hot-toast'
 
 const Register = () => {
     const [username, setUsername] = useState('')
@@ -15,14 +16,14 @@ const Register = () => {
     const handleRegister = async (e) => {
         e.preventDefault()
 
-        if (!agre) {
-            alert("You must agree to the terms and conditions that have been provided")
-        }
-
         try {
+            if (!agre) {
+                toast.error("You must agree to the terms and conditions that have been provided")
+                return
+            }
             const result = await authServices.register({username, email, password})
             console.log(result.data)
-            navigate("/dashboard")
+            navigate("/login")
         } catch (error) {
             if (error.response && error.response.status === 409) {
                 setError("Username already in use")

@@ -77,6 +77,7 @@ const forgottenPassword = async (req, res) => {
         res.json({message : "Link reset password sudah di kirim ke email"})
 
     } catch (error) {
+        console.error(error)
         res.status(500).json({error : error.message})
     }
 }
@@ -102,16 +103,9 @@ const resetPassword = async (req, res) => {
         res.status(201).json({message : "Berhasil mengubah password"})
         
     } catch (error) {
+        console.error(error)
         res.status(401).json({message : "Token tidak cocok atau kadaluwarsa"})
     }
 }
 
-const logout = async (req, res) => {
-    try {
-        res.status(200).json({message : "Logout berhasil"})
-    } catch (error) {
-        res.status(500).json({error : error.message})
-    }
-}
-
-module.exports = {register, login, forgottenPassword, resetPassword, logout}
+module.exports = {register, login, forgottenPassword, resetPassword}

@@ -26,7 +26,7 @@ const ServicesData = [
 
 const Main = () => {
     return (
-        <div className='flex items-center flex-col mt-20 text-center px-6 justify-center'>
+        <div className='flex items-center flex-col mt-5 text-center px-6 justify-center'>
                 <section className="w-screen bg-[url('./assets/gelombang.jpg')] bg-cover bg-center bg-no-repeat py-35 text-center text-red-950">
                 <h3 className='text-3xl md:text-5xl font-semibold mb-4 '>
                     Welcome to Inventory Management System
@@ -51,7 +51,7 @@ const Main = () => {
 
                 <div className='grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-8 mt-10'>
                     {ServicesData.map((service) => (
-                    <div className='text-center p-4 space-y-6'>
+                    <div key={service.id} className='text-center p-4 space-y-6'>
                         <img 
                             src={service.image} 
                             alt=''

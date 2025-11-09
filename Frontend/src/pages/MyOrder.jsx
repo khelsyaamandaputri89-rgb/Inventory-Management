@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react"
 import orderServices from "../services/orderServices"
 import Table from "../components/Table"
 import { FiArrowLeft } from "react-icons/fi"
+import toast from "react-hot-toast"
 
 const MyOrders = () => {
   const [orders, setOrders] = useState([])
@@ -11,13 +12,14 @@ const MyOrders = () => {
   const fetchOrders = async () => {
     setLoading(true);
     try {
-      const result = await orderServices.getOrder()
-      console.log("Orders to display:", orders)
-      setOrders(result.data);
+        const result = await orderServices.getOrder()
+        console.log("Orders to display:", orders)
+        setOrders(result.data)
     } catch (err) {
-      console.error("Error fetching my orders:", err);
+        console.error("Error fetching my orders:", err)
+        toast.error("Failed to load orders")
     } finally {
-      setLoading(false);
+        setLoading(false);
     }
   };
 
@@ -32,18 +34,18 @@ const MyOrders = () => {
           fetchOrders()
           return
         } 
-        console.log("[handleSearch] calling orderProduct with:", keyword)
-        const result = await orderServices.searchOrder(keyword)
-        console.log("[handleSearch] response:", result)
-        setOrders(result.data)
+          console.log("[handleSearch] calling orderProduct with:", keyword)
+          const result = await orderServices.searchOrder(keyword)
+          console.log("[handleSearch] response:", result)
+          setOrders(result.data)
         } catch (error) {
-        console.error("[handleSearch] error:", error)
-        alert("Search failed")
+          console.error("[handleSearch] error:", error)
+          toast.error("Search failed")
       }
     }
 
   const columns = [
-        { header: "Product ID", accessor: "id" },
+        { header: "Order ID", accessor: "id" },
         { header: "Items", accessor: "items", render: (items) => Array.isArray(items) ? items.map(i => (typeof i === "string" ? i : i.name)).join(", ") : "-" },
         { header: "Category", accessor: "categories" },
         { header: "Quantity", accessor: "totalQty" },

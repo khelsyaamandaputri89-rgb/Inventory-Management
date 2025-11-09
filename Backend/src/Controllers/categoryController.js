@@ -84,7 +84,7 @@ const searchCategory = async (req, res) => {
       categories = await Categories.findAll()
     }
 
-    res.status(200).json(categories);
+    res.status(200).json(categories)
   } catch (error) {
     console.error("[searchCategory] error:", error)
     res.status(500).json({ error: error.message })

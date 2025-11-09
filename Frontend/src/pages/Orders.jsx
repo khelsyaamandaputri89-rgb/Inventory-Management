@@ -2,6 +2,8 @@ import React, { useEffect, useState } from "react"
 import orderServices from "../services/orderServices"
 import Table from "../components/Table"
 import { FiArrowLeft } from "react-icons/fi"
+import toast from "react-hot-toast"
+import Swal from "sweetalert2"
 
 const Order = () => {
     const [orders, setOrders] = useState([]);
@@ -13,11 +15,10 @@ const Order = () => {
         try {
             const result = await orderServices.getAllOrder()
             setOrders(result.data)
-            console.log("Fetched orders (raw):", result.data)
         } catch (error) {
-        console.error("Failed to load orders", error)
+            toast.error("Failed to load orders")
         } finally {
-        setLoading(false);
+            setLoading(false);
         }
     }
 
@@ -26,35 +27,42 @@ const Order = () => {
     }, []);
 
     const handleDeleteOrder = async (id) => {
-        if (!window.confirm("Are you sure you want to delete this order?")) return;
+        const result = await Swal.fire({
+            title: 'Are you sure?',
+            text: "This action cannot be undone!",
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#b91c1c',
+            cancelButtonColor: '#CBCBCB',
+            confirmButtonText: 'Yes, delete it!',
+            background: '#fff',
+        })
 
+        if (result.isConfirmed) {
         try {
-        const result = await orderServices.deleteOrder(id);
-        alert(result.data.message);
-        fetchDataOrder();
+            const result = await orderServices.deleteOrder(id);
+            toast.success(result.data.message)
+            fetchDataOrder();
         } catch (error) {
-        alert("Failed to delete order");
+            toast.error("Failed to delete order")
         }
+      }
     }
 
     const handleSearch = async (keyword) => {
         try {
-          setSearch(keyword)
-          if (keyword.trim() === "") {
-            fetchDataOrder()
-            return
-          } 
-          console.log("[handleSearch] calling orderProduct with:", keyword)
-          const result = await orderServices.searchOrder(keyword)
-          console.log("[handleSearch] response:", result)
-          setOrders(result.data)
-          console.log(result.data)
+            setSearch(keyword)
+                if (keyword.trim() === "") {
+                    fetchDataOrder()
+                    return
+                } 
+            const result = await orderServices.searchOrder(keyword)
+            setOrders(result.data)
+            console.log(result.data)
         } catch (error) {
-          console.error("[handleSearch] error:", error)
-          alert("Search failed")
+            toast.error("Search failed")
         }
       }
-    
 
     const columns = [
         { header: "ID", accessor: "id" },
@@ -63,7 +71,21 @@ const Order = () => {
         { header: "Category", accessor: "categories" },
         { header: "Quantity", accessor: "totalQty" },
         { header: "Total Price", accessor: "totalPrice", render: (price) => `Rp ${Number(price  ).toLocaleString("id-ID")}` },
-        { header: "Status", accessor: "status" },
+        { header: "Status", accessor: "status",
+            render: (status) => (
+              <span
+                className={`${
+                  status === "Completed"
+                    ? "text-green-600"
+                    : status === "Pending"
+                    ? "text-red-700"
+                    : "text-yellow-500"
+                } font-medium`}
+              >
+                {status}
+              </span>
+            )
+         },
         { header: "Date", accessor: "date"},
     ]
 

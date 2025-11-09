@@ -5,6 +5,8 @@ import productsServices from "../services/productsServices"
 import orderServices from "../services/orderServices"
 import categoriesServices from "../services/categoriesServices"
 import { FiArrowLeft } from "react-icons/fi"
+import toast from "react-hot-toast"
+import Swal from "sweetalert2"
 
 const Product = () => {
   const [products, setProducts] = useState([])
@@ -14,6 +16,9 @@ const Product = () => {
   const [formData, setFormData] = useState({ name: "", price: 0, stock: 0 });
   const [loading, setLoading] = useState(false)
   const [categories, setCategories] = useState([])
+  const [isModalOpenOrder, setModalOpenOrder] = useState(false)
+  const [selectedProduct, setSelectedProduct] = useState(null)
+  const [orderQuantity, setOrderQuantity] = useState(1)
 
   const data = JSON.parse(localStorage.getItem("user"))
   const user = data
@@ -22,26 +27,27 @@ const Product = () => {
   const fetchDataProducts = async () => {
     setLoading(true);
     try {
-      const result = await productsServices.getProduct()
-      console.log("[fetchDataProducts] response:", result)
-      setProducts(result.data.map(p => ({
-        ...p,
-        category: p.Category?.name || "No category"
-      })))
+        const result = await productsServices.getProduct()
+        console.log("[fetchDataProducts] response:", result)
+        setProducts(result.data.map(p => ({
+          ...p,
+          category: p.Category?.name || "No category"
+        })))
     } catch (error) {
-      console.error("[fetchDataProducts] error:", error)
-      alert("Failed fetch products — cek console/network")
+        console.error("[fetchDataProducts] error:", error)
+        toast.error("Failed to load products")
     } finally {
-      setLoading(false)
+        setLoading(false)
     }
   }
 
   const fetchCategories = async () => {
     try {
-      const result = await categoriesServices.getCategories()
-      setCategories(result.data)
+        const result = await categoriesServices.getCategories()
+        setCategories(result.data)
     } catch (error) {
-      console.error("Failed to fetch categories", error)
+        console.error("Failed to fetch categories", error)
+        toast.error("Failed to load products")
     }
   }
 
@@ -64,76 +70,87 @@ const Product = () => {
 
   const handleSubmit = async () => {
     try {
-      console.log("[handleSubmit] formData:", formData, "isEdit:", isEditMode);
-      if (!formData.category_id) {
-        return alert("Kategori harus dipilih");
-      }
-      if (isEditMode) {
-        if (!formData.id) throw new Error("Missing product id for update")
-        await productsServices.updateProduct(formData.id, formData)
-        alert("Product updated")
-      } else {
-        await productsServices.addProduct(formData)
-        alert("Product added")
-      }
-      setModalOpen(false)
-      fetchDataProducts()
+        if (!formData.category_id) {
+          return toast.error("Category must be selected");
+        }
+        if (isEditMode) {
+          if (!formData.id) throw new Error("Missing product id for update")
+          await productsServices.updateProduct(formData.id, formData)
+          toast.success("Product updated")
+        } else {
+          await productsServices.addProduct(formData)
+          toast.success("Product added")
+        }
+        setModalOpen(false)
+        fetchDataProducts()
     } catch (error) {
-      console.error("[handleSubmit] error:", error)
-      alert("Failed to save product")
+        console.error("[handleSubmit] error:", error)
+        toast.error("Failed to save product")
     }
   }
 
   const handleDelete = async (id) => {
+    const result = await Swal.fire({
+                title: 'Are you sure?',
+                text: "This action cannot be undone!",
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#b91c1c',
+                cancelButtonColor: '#CBCBCB',
+                confirmButtonText: 'Yes, delete it!',
+                background: '#fff',
+            })
+    if (result.isConfirmed)
     try {
-      if (!window.confirm("Delete this product?")) return
-      await productsServices.deleteProduct(id)
-      alert("Product deleted")
-      fetchDataProducts()
+        const result = await productsServices.deleteProduct(id)
+        toast.success(result.data.message)
+        fetchDataProducts()
     } catch (error) {
-      console.error("[handleDelete] error:", error)
-      alert("Failed to delete product")
+        console.error("[handleDelete] error:", error)
+        toast.error("Failed to delete product")
     }
   }
 
   const handleSearch = async (keyword) => {
     try {
-      setSearch(keyword)
-      if (keyword.trim() === "") {
-        fetchDataProducts()
-        return
-      }
-      console.log("[handleSearch] calling searchProduct with:", keyword)
-      const res = await productsServices.searchProduct(keyword)
-      console.log("[handleSearch] response:", res)
-      setProducts(Array.isArray(res.data) ? res.data : [])
+        setSearch(keyword)
+        if (keyword.trim() === "") {
+          fetchDataProducts()
+          return
+        }
+        const res = await productsServices.searchProduct(keyword)
+        setProducts(Array.isArray(res.data) ? res.data : [])
     } catch (error) {
-      console.error("[handleSearch] error:", error)
-      alert("Search failed — cek console");
+        toast.error("Search failed")
     }
   }
 
-  const handleOrder = async (product) => {
+  const handleOrder = (product) => {
+    setSelectedProduct(product)
+    setModalOpenOrder(true)
+    setOrderQuantity(1)
+  }
+
+  const submitOrder = async () => {
     try {
-        const quantity = parseInt(prompt(`Enter the order quantity for ${product.name}:`), 10);
-        if (!quantity || quantity <= 0) return alert("Invalid amount")
-
-            const payload = {
-                items: [
-                    {
-                        product_id: product.id,
-                        product_price: product.price,
-                        quantity,
-                    }
-                ]
-            }
-
-        const result = await orderServices.createOrder(payload)
-        alert("Order was successfully placed")
-        console.log("Orders response :", result)
+        if (!orderQuantity || orderQuantity <= 0) {
+          return toast.error("Enter a valid amount!")
+        }
+        const payload = {
+          items :[
+            {
+              product_id : selectedProduct.id,
+              product_price : selectedProduct.price,
+              quantity : parseInt(orderQuantity, 10)
+            },
+          ],
+        }
+        await orderServices.createOrder(payload)
+        toast.success("Order succesfully")
+        setModalOpenOrder(false)
     } catch (error) {
-        console.error("[handleOrder], error :", error)
-        alert("Failed to load order!")
+        console.error(error)
+        toast.error("Failed to order")
     }
   }
 
@@ -159,7 +176,7 @@ const Product = () => {
           { header: "Stock", accessor: "stock" },
           { header: "Category", accessor: "category", 
             type: "select",
-            options: categories.map(cat => ({ value: cat.id, label: cat.name }))
+            options: categories
           }
         ]}
         data={products}
@@ -192,8 +209,42 @@ const Product = () => {
         onSubmit={handleSubmit}
       />
       </div>
+
+      {isModalOpenOrder && (
+          <div className="fixed inset-0 flex items-center justify-center bg-black/30 bg-opacity-50 z-50">
+            <div className="bg-white rounded-lg p-6 w-80 shadow-lg">
+              <h3 className="text-lg font-semibold mb-4">
+                Order {selectedProduct?.name}
+              </h3>
+              <label className="block text-gray-700 font-medium mb-2">
+                Quantity
+              </label>
+              <input
+                type="number"
+                min="1"
+                value={orderQuantity}
+                onChange={(e) => setOrderQuantity(e.target.value)}
+                className="border border-gray-300 p-2 w-full rounded mb-4"
+              />
+              <div className="flex justify-end gap-2">
+                <button
+                  className="bg-gray-400 text-white px-3 py-1 rounded"
+                  onClick={() => setModalOpenOrder(false)}
+                >
+                  Cancel
+                </button>
+                <button
+                  className="bg-red-800 text-white px-3 py-1 rounded"
+                  onClick={submitOrder}
+                >
+                  Submit
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
     </div>
-  );
-};
+  )
+}
 
 export default Product;

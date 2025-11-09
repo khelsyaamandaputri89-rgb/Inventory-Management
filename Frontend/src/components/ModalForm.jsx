@@ -1,4 +1,5 @@
 import React from "react"
+import Select from "react-select"
 
 const FormModal = ({
     isOpen,
@@ -23,12 +24,51 @@ const FormModal = ({
                     onSubmit();
                   }}
                  >
-                    {fields.map((field) => (
-                        <div>
+                    {fields.map((field, index) => (
+                        <div key={index} className="mb-3">
                             <label className="block mb-1 text-sm font-medium">
                                 {field.label}
                             </label>
 
+                            {field.type === "select" ? (
+                              <Select
+                                options={field.options}
+                                value={field.options.find(opt => opt.value === formData[field.name])}
+                                onChange={(selected) =>
+                                  setFormData({ ...formData, [field.name]: selected?.value })
+                                }
+                                placeholder={`Select ${field.label}`}
+                                menuPlacement="top" 
+                                menuPosition="fixed"
+                                styles={{
+                                  menu: (provided) => ({
+                                    ...provided,
+                                    zIndex: 9999,
+                                    display: "flex",  
+                                    flexDirection: "row",
+                                    background: "white",
+                                    padding: "0.5rem",
+                                    gap: "0.5rem",
+                                    boxShadow: "0 4px 6px rgba(0,0,0,0.1)",
+                                    width: "fit-content" 
+                                  }),
+                                  option: (provided) => ({
+                                    ...provided,
+                                    minWidth: "100px",
+                                    whiteSpace: "nowrap",
+                                  }),
+                                }}
+                              />
+                            ) : field.type === "textarea" ? (
+                              <textarea
+                                value={formData[field.name] || ""}
+                                onChange={(e) =>
+                                  setFormData({ ...formData, [field.name]: e.target.value })
+                                }
+                                className="border border-gray-300 rounded w-full p-2"
+                                placeholder={field.placeholder || ""}
+                              />
+                            ) : (
                             <input
                               type={field.type || "text"}
                               value={formData[field.name] || ""}
@@ -38,6 +78,7 @@ const FormModal = ({
                               className="border border-gray-300 rounded w-full p-2"
                               placeholder={field.placeholder || ""}
                             />
+                            )}
                         </div>
                     ))}
 

@@ -21,3 +21,10 @@
   font-weight: 700;
   font-style: normal;
 }
+
+
+.custom-dropdown option {
+  display: inline-block;
+  width: auto;
+  margin-right: 10px;
+}
